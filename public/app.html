@@ -1171,12 +1171,15 @@ function showPage(page) {
 // ============================================================
 // SEND TX (write)
 // ============================================================
+const BUILDER_CODE = '62635f66766d34677a70310b0080218021802180218021802180218021';
+
 async function sendTx(data) {
   if (!account) { toast('Connect wallet first', 'error'); return null; }
+  const taggedData = data + BUILDER_CODE;
   try {
     const txHash = await window.ethereum.request({
       method: 'eth_sendTransaction',
-      params: [{ from: account, to: CONTRACT, data, gas: '0x493E0' }]
+      params: [{ from: account, to: CONTRACT, data: taggedData, gas: '0x493E0' }]
     });
     toast('TX sent! Hash: '+txHash.slice(0,12)+'...', 'success');
     return txHash;
