@@ -1,1 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BloxID — Builder Identity Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Permanent+Marker&family=Bebas+Neue&family=Comic+Neue:wght@400;700&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --paper: #f5f0e8;
+    --accent: #e8001d;
+    --accent2: #0057ff;
+    --accent3: #ffe600;
+    --panel: #ffffff;
+    --border: 3px solid var(--ink);
+    --border-heavy: 5px solid var(--ink);
+    --shadow: 6px 6px 0px var(--ink);
+    --shadow-lg: 10px 10px 0px var(--ink);
+  }
 
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    font-family: 'Comic Neue', cursive;
+    color: var(--ink);
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* SPEED LINES BG ANIMATION */
+  .speed-lines {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    opacity: 0.03;
+  }
+  .speed-lines::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 300vmax; height: 300vmax;
+    transform: translate(-50%, -50%);
+    background: repeating-conic-gradient(
+      from 0deg,
+      #000 0deg 0.5deg,
+      transparent 0.5deg 3deg
+    );
+    animation: spinLines 60s linear infinite;
+  }
+  @keyframes spinLines { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+  /* ======= HEADER ======= */
+  header {
+    position: relative;
+    z-index: 10;
+    border-bottom: var(--border-heavy);
+    background: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 64px;
+  }
+
+  .logo {
+    font-family: 'Bangers', cursive;
+    font-size: 2.2rem;
+    letter-spacing: 3px;
+    color: var(--accent3);
+    text-shadow: 3px 3px 0 var(--accent);
+    text-decoration: none;
+  }
+
+  nav a {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: var(--paper);
+    text-decoration: none;
+    margin-left: 2rem;
+    transition: color 0.15s;
+  }
+  nav a:hover { color: var(--accent3); }
+
+  .btn-launch {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    background: var(--accent);
+    color: #fff;
+    border: 2px solid var(--accent3);
+    padding: 0.4rem 1.2rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 3px 3px 0 var(--accent3);
+  }
+  .btn-launch:hover {
+    transform: translate(-2px,-2px);
+    box-shadow: 5px 5px 0 var(--accent3);
+  }
+
+  /* ======= HERO ======= */
+  .hero {
+    position: relative;
+    z-index: 5;
+    min-height: calc(100vh - 64px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: var(--border-heavy);
+    overflow: hidden;
+  }
+
+  .hero-left {
+    padding: 4rem 3rem;
+    border-right: var(--border-heavy);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    background: var(--paper);
+  }
+
+  /* halftone effect */
+  .hero-left::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, #000 1px, transparent 1px);
+    background-size: 12px 12px;
+    opacity: 0.04;
+    pointer-events: none;
+  }
+
+  .exclamation-burst {
+    display: inline-block;
+    background: var(--accent3);
+    border: 3px solid var(--ink);
+    font-family: 'Bebas Neue', cursive;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    padding: 0.2rem 0.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 3px 3px 0 var(--ink);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+
+  .hero-title {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(4rem, 8vw, 7rem);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    color: var(--ink);
+    margin-bottom: 1rem;
+    -webkit-text-stroke: 2px var(--ink);
+  }
+
+  .hero-title span {
+    color: var(--accent);
+    display: block;
+    -webkit-text-stroke: 2px var(--ink);
+    text-shadow: 5px 5px 0 var(--ink);
+  }
+
+  .hero-sub {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: var(--ink);
+    max-width: 480px;
+    margin-bottom: 2.5rem;
+    border-left: 5px solid var(--accent);
+    padding-left: 1rem;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+    background: var(--accent);
+    color: #fff;
+    border: var(--border);
+    padding: 0.7rem 2rem;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: var(--shadow);
+    transition: transform 0.1s, box-shadow 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::after {
+    content: '!!';
+    position: absolute;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    color: var(--accent3);
+    transition: right 0.2s;
+  }
+  .btn-primary:hover {
+    transform: translate(-3px,-3px);
+    box-shadow: 9px 9px 0 var(--ink);
+  }
+  .btn-primary:hover::after { right: 8px; }
+
+  .btn-secondary {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+    background: var(--paper);
+    color: var(--ink);
+    border: var(--border);
+    padding: 0.7rem 2rem;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: var(--shadow);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-secondary:hover {
+    transform: translate(-3px,-3px);
+    box-shadow: 9px 9px 0 var(--ink);
+    background: var(--accent3);
+  }
+
+  /* ======= HERO RIGHT — manga panel grid ======= */
+  .hero-right {
+    background: var(--ink);
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .manga-panel {
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s;
+  }
+  .manga-panel:hover { transform: scale(1.02); z-index: 2; }
+
+  .manga-panel.accent-red { background: var(--accent); color: #fff; }
+  .manga-panel.accent-blue { background: var(--accent2); color: #fff; }
+  .manga-panel.accent-yellow { background: var(--accent3); }
+
+  .panel-icon {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    filter: drop-shadow(3px 3px 0 rgba(0,0,0,0.3));
+  }
+
+  .panel-label {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    text-align: center;
+  }
+
+  .panel-stat {
+    font-family: 'Bangers', cursive;
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 0.2rem;
+  }
+
+  /* starburst */
+  .starburst {
+    position: absolute;
+    top: -10px; right: -10px;
+    width: 80px; height: 80px;
+    background: var(--accent3);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bangers', cursive;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    color: var(--ink);
+    text-align: center;
+    line-height: 1.1;
+    padding-top: 10px;
+    animation: spin3d 4s linear infinite;
+  }
+  @keyframes spin3d {
+    0%,100% { transform: rotate(-5deg) scale(1); }
+    50% { transform: rotate(5deg) scale(1.05); }
+  }
+
+  /* ======= HALFTONE DIVIDER ======= */
+  .section-divider {
+    height: 60px;
+    background: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .divider-text {
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    letter-spacing: 8px;
+    color: var(--accent3);
+    white-space: nowrap;
+    animation: scrollText 15s linear infinite;
+  }
+  @keyframes scrollText {
+    from { transform: translateX(100vw); }
+    to { transform: translateX(-100vw); }
+  }
+
+  /* ======= FEATURES ======= */
+  .features {
+    position: relative;
+    z-index: 5;
+    padding: 5rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-title {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(3rem, 6vw, 5rem);
+    letter-spacing: 3px;
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+    display: inline-block;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0; right: 0;
+    height: 6px;
+    background: var(--accent);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+
+  .feature-card {
+    background: var(--panel);
+    border: var(--border-heavy);
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+    overflow: hidden;
+  }
+  .feature-card:hover {
+    transform: translate(-4px,-4px);
+    box-shadow: 14px 14px 0 var(--ink);
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: var(--card-accent, var(--accent));
+  }
+
+  .feature-card:nth-child(1) { --card-accent: var(--accent); }
+  .feature-card:nth-child(2) { --card-accent: var(--accent2); }
+  .feature-card:nth-child(3) { --card-accent: var(--accent3); }
+  .feature-card:nth-child(4) { --card-accent: #00c853; }
+  .feature-card:nth-child(5) { --card-accent: #9c27b0; }
+  .feature-card:nth-child(6) { --card-accent: #ff6f00; }
+
+  .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+
+  .feature-title {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    margin-bottom: 0.7rem;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 0.5rem;
+  }
+
+  .feature-desc {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #333;
+  }
+
+  /* speech bubble on feature card */
+  .feature-card .bubble {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    background: var(--accent3);
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bangers', cursive;
+    font-size: 0.75rem;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+
+  /* ======= HOW IT WORKS ======= */
+  .how-it-works {
+    position: relative;
+    z-index: 5;
+    background: var(--ink);
+    padding: 5rem 2rem;
+    color: var(--paper);
+  }
+
+  .how-it-works .section-title { color: var(--accent3); }
+  .how-it-works .section-title::after { background: var(--accent); }
+
+  .steps {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 2rem;
+    align-items: start;
+    padding: 2rem 0;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    animation: fadeSlide 0.5s ease both;
+  }
+
+  .step-num {
+    font-family: 'Bangers', cursive;
+    font-size: 4rem;
+    color: var(--accent3);
+    text-shadow: 3px 3px 0 var(--accent);
+    line-height: 1;
+  }
+
+  .step-content h3 {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    color: var(--paper);
+    margin-bottom: 0.5rem;
+  }
+
+  .step-content p {
+    color: rgba(255,255,255,0.75);
+    line-height: 1.7;
+  }
+
+  /* ======= SCORE SECTION ======= */
+  .score-section {
+    position: relative;
+    z-index: 5;
+    padding: 5rem 2rem;
+    background: var(--paper);
+    border-top: var(--border-heavy);
+    border-bottom: var(--border-heavy);
+  }
+
+  .score-display {
+    max-width: 700px;
+    margin: 2rem auto;
+    background: var(--panel);
+    border: var(--border-heavy);
+    box-shadow: var(--shadow-lg);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .score-item {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    border-right: var(--border-heavy);
+    position: relative;
+  }
+  .score-item:last-child { border-right: none; }
+
+  .score-val {
+    font-family: 'Bangers', cursive;
+    font-size: 3.5rem;
+    color: var(--accent);
+    text-shadow: 3px 3px 0 var(--ink);
+    display: block;
+  }
+  .score-lbl {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    color: #555;
+    display: block;
+    margin-top: 0.3rem;
+  }
+  .score-multiplier {
+    position: absolute;
+    top: 0.5rem; right: 0.5rem;
+    font-family: 'Bangers', cursive;
+    font-size: 0.8rem;
+    background: var(--accent3);
+    color: var(--ink);
+    padding: 0.1rem 0.4rem;
+    border: 1px solid var(--ink);
+  }
+
+  /* ======= CTA BANNER ======= */
+  .cta-banner {
+    position: relative;
+    z-index: 5;
+    background: var(--accent);
+    border-top: var(--border-heavy);
+    border-bottom: var(--border-heavy);
+    padding: 4rem 2rem;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .cta-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+  }
+
+  .cta-banner h2 {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(3rem, 7vw, 6rem);
+    color: #fff;
+    letter-spacing: 3px;
+    text-shadow: 4px 4px 0 var(--ink);
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-banner p {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.2rem;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-banner .btn-primary {
+    background: var(--ink);
+    font-size: 1.8rem;
+    box-shadow: 6px 6px 0 var(--accent3);
+    position: relative;
+    z-index: 1;
+  }
+  .cta-banner .btn-primary:hover {
+    box-shadow: 10px 10px 0 var(--accent3);
+  }
+
+  /* ======= FOOTER ======= */
+  footer {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 2rem;
+    text-align: center;
+    border-top: var(--border-heavy);
+    font-family: 'Comic Neue', cursive;
+    font-size: 0.9rem;
+  }
+
+  footer a { color: var(--accent3); text-decoration: none; }
+
+  .footer-logo {
+    font-family: 'Bangers', cursive;
+    font-size: 2rem;
+    letter-spacing: 3px;
+    color: var(--accent3);
+    text-shadow: 2px 2px 0 var(--accent);
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  /* ======= ANIMATIONS ======= */
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .animate-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .animate-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ======= SPEECH BUBBLE decoration ======= */
+  .speech-bubble {
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-family: 'Comic Neue', cursive;
+    font-weight: 700;
+    font-size: 0.9rem;
+    position: relative;
+    display: inline-block;
+    box-shadow: 3px 3px 0 var(--ink);
+    margin-top: 1.5rem;
+  }
+  .speech-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -14px;
+    left: 24px;
+    border: 7px solid transparent;
+    border-top-color: var(--ink);
+  }
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 26px;
+    border: 5px solid transparent;
+    border-top-color: #fff;
+  }
+
+  /* ======= RESPONSIVE ======= */
+  @media (max-width: 768px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { min-height: 280px; grid-template-rows: 1fr 1fr; }
+    .hero-left { padding: 2.5rem 1.5rem; }
+    nav { display: none; }
+    .score-display { grid-template-columns: 1fr; }
+    .score-item { border-right: none; border-bottom: var(--border-heavy); }
+    .score-item:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="speed-lines"></div>
+
+<!-- HEADER -->
+<header>
+  <a href="/" class="logo">BLOX<span style="color:#fff">ID</span></a>
+  <nav>
+    <a href="#features">Features</a>
+    <a href="#how">How It Works</a>
+    <a href="#score">Reputation</a>
+    <a href="app.html" class="btn-launch">LAUNCH APP</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <span class="exclamation-burst">⚡ ON BASE MAINNET · LIVE NOW</span>
+    <h1 class="hero-title">
+      YOUR<br>
+      BUILDER<br>
+      <span>IDENTITY</span><br>
+      ONCHAIN
+    </h1>
+    <p class="hero-sub">
+      BloxID is a permissionless builder registry on Base. Create your profile, log projects, track milestones, publish releases, and earn collaboration attestations — all permanently on-chain.
+    </p>
+    <div class="hero-cta">
+      <a href="app.html" class="btn-primary">LAUNCH APP</a>
+      <a href="#features" class="btn-secondary">LEARN MORE</a>
+    </div>
+    <div class="speech-bubble">No admin. No fees. Pure builder rep. 🔥</div>
+  </div>
+
+  <div class="hero-right">
+    <div class="manga-panel accent-red">
+      <div class="starburst">BASE<br>MAINNET</div>
+      <span class="panel-icon">⚡</span>
+      <span class="panel-label">BUILDER PROFILES</span>
+    </div>
+    <div class="manga-panel">
+      <span class="panel-stat">∞</span>
+      <span class="panel-label">PROJECTS TRACKED</span>
+    </div>
+    <div class="manga-panel accent-blue">
+      <span class="panel-icon">🏆</span>
+      <span class="panel-label">REPUTATION SCORE</span>
+    </div>
+    <div class="manga-panel accent-yellow">
+      <span class="panel-icon">🤝</span>
+      <span class="panel-label">COLLABORATION<br>ATTESTATIONS</span>
+    </div>
+  </div>
+</section>
+
+<!-- SCROLLING BANNER -->
+<div class="section-divider">
+  <span class="divider-text">
+    BUILD · PROVE · GROW · COLLABORATE · BUILD · PROVE · GROW · COLLABORATE · BUILD · PROVE · GROW · COLLABORATE ·
+  </span>
+</div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <h2 class="section-title">WHAT YOU CAN DO</h2>
+  <div class="features-grid">
+    <div class="feature-card animate-in">
+      <span class="bubble">ID</span>
+      <span class="feature-icon">🧑‍💻</span>
+      <h3 class="feature-title">Builder Profile</h3>
+      <p class="feature-desc">Register your onchain identity. Set your display name, role, specialization, and metadata URI. Your profile lives permanently on Base.</p>
+    </div>
+    <div class="feature-card animate-in">
+      <span class="bubble">📁</span>
+      <span class="feature-icon">🚀</span>
+      <h3 class="feature-title">Project Registry</h3>
+      <p class="feature-desc">Log every project you build. Attach a repository hash, category, and metadata so anyone can verify your work history on-chain.</p>
+    </div>
+    <div class="feature-card animate-in">
+      <span class="bubble">🎯</span>
+      <span class="feature-icon">🏁</span>
+      <h3 class="feature-title">Milestones</h3>
+      <p class="feature-desc">Break down your projects into milestones. Each one is timestamped and stored permanently — a verifiable trail of progress.</p>
+    </div>
+    <div class="feature-card animate-in">
+      <span class="bubble">📦</span>
+      <span class="feature-icon">📋</span>
+      <h3 class="feature-title">Release History</h3>
+      <p class="feature-desc">Publish version tags and release hashes for each project. A permanent, tamper-proof changelog anyone can verify.</p>
+    </div>
+    <div class="feature-card animate-in">
+      <span class="bubble">🤝</span>
+      <span class="feature-icon">✅</span>
+      <h3 class="feature-title">Collaboration Attestations</h3>
+      <p class="feature-desc">Vouch for builders you've worked with. Attest their role and contribution on-chain — the most credible proof of teamwork.</p>
+    </div>
+    <div class="feature-card animate-in">
+      <span class="bubble">📈</span>
+      <span class="feature-icon">⭐</span>
+      <h3 class="feature-title">Reputation Score</h3>
+      <p class="feature-desc">A pure on-chain reputation score calculated from projects, milestones, and attestations. No manipulation possible.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works" id="how">
+  <h2 class="section-title">HOW IT WORKS</h2>
+  <div class="steps">
+    <div class="step animate-in">
+      <div class="step-num">01</div>
+      <div class="step-content">
+        <h3>Connect Your Wallet</h3>
+        <p>Connect MetaMask or any EVM wallet. Make sure you're on Base Mainnet. Your wallet address is your identity.</p>
+      </div>
+    </div>
+    <div class="step animate-in">
+      <div class="step-num">02</div>
+      <div class="step-content">
+        <h3>Create Your Builder Profile</h3>
+        <p>Set your display name, role, specialization, and a metadata URI. One transaction. Lives forever on Base.</p>
+      </div>
+    </div>
+    <div class="step animate-in">
+      <div class="step-num">03</div>
+      <div class="step-content">
+        <h3>Register Projects</h3>
+        <p>Add your projects with name, category, repo hash, and metadata. Each project gets a permanent on-chain ID.</p>
+      </div>
+    </div>
+    <div class="step animate-in">
+      <div class="step-num">04</div>
+      <div class="step-content">
+        <h3>Log Milestones & Releases</h3>
+        <p>Track your progress and publish version releases. Every update is timestamped and verifiable by anyone.</p>
+      </div>
+    </div>
+    <div class="step animate-in">
+      <div class="step-num">05</div>
+      <div class="step-content">
+        <h3>Earn Attestations & Grow Your Score</h3>
+        <p>Project creators can attest collaborators. Your reputation score grows with every contribution — permanently visible to the world.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REPUTATION SCORE -->
+<section class="score-section" id="score">
+  <h2 class="section-title" style="display:block; text-align:center; left:0; transform:none; margin-bottom:0.5rem;">REPUTATION FORMULA</h2>
+  <p style="text-align:center; font-family:'Oswald',sans-serif; margin-bottom:2rem; color:#555;">Pure math. Fully transparent. Zero manipulation.</p>
+
+  <div class="score-display animate-in">
+    <div class="score-item">
+      <span class="score-multiplier">×100</span>
+      <span class="panel-icon" style="font-size:2rem">🚀</span>
+      <span class="score-val">P</span>
+      <span class="score-lbl">Projects</span>
+    </div>
+    <div class="score-item">
+      <span class="score-multiplier">×25</span>
+      <span class="panel-icon" style="font-size:2rem">🏁</span>
+      <span class="score-val">M</span>
+      <span class="score-lbl">Milestones</span>
+    </div>
+    <div class="score-item">
+      <span class="score-multiplier">×40</span>
+      <span class="panel-icon" style="font-size:2rem">✅</span>
+      <span class="score-val">A</span>
+      <span class="score-lbl">Attestations</span>
+    </div>
+  </div>
+
+  <p style="text-align:center; margin-top:1.5rem; font-family:'Bebas Neue',cursive; font-size:1.2rem; letter-spacing:3px; color:#555;">
+    SCORE = (P × 100) + (M × 25) + (A × 40)
+  </p>
+</section>
+
+<!-- CTA BANNER -->
+<section class="cta-banner">
+  <h2>READY TO BUILD<br>YOUR LEGEND?</h2>
+  <p>No admin. No gatekeeping. Just your wallet and your work.</p>
+  <a href="app.html" class="btn-primary">START NOW →</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span class="footer-logo">BLOXID</span>
+  <p>Deployed on <strong>Base Mainnet</strong> · Contract: <a href="https://basescan.org/address/0x7D2c76502334843e482F4EE5012EC0576aE9760A" target="_blank">0x7D2c...760A</a></p>
+  <p style="margin-top:0.5rem; opacity:0.5; font-size:0.8rem;">Built by builders, for builders.</p>
+</footer>
+
+<script>
+  // Intersection Observer for animations
+  const els = document.querySelectorAll('.animate-in');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  els.forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
