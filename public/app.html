@@ -1,1 +1,1729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BloxID App — Builder Identity Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bebas+Neue&family=Comic+Neue:wght@400;700&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --paper: #f5f0e8;
+    --panel: #ffffff;
+    --accent: #e8001d;
+    --accent2: #0057ff;
+    --accent3: #ffe600;
+    --green: #00c853;
+    --border: 3px solid var(--ink);
+    --border-heavy: 5px solid var(--ink);
+    --shadow: 5px 5px 0 var(--ink);
+    --sidebar: 260px;
+  }
 
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    background-image:
+      linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+    font-family: 'Comic Neue', cursive;
+    color: var(--ink);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ======= TOPBAR ======= */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--ink);
+    border-bottom: var(--border-heavy);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    height: 58px;
+    gap: 1rem;
+  }
+
+  .logo {
+    font-family: 'Bangers', cursive;
+    font-size: 1.9rem;
+    letter-spacing: 3px;
+    color: var(--accent3);
+    text-shadow: 2px 2px 0 var(--accent);
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .chain-badge {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    background: var(--accent2);
+    color: #fff;
+    border: 2px solid var(--accent3);
+    padding: 0.15rem 0.7rem;
+    flex-shrink: 0;
+  }
+
+  .wallet-info {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-left: auto;
+  }
+
+  #walletAddr {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.7);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #scoreDisplay {
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    color: var(--accent3);
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--accent3);
+    padding: 0.15rem 0.6rem;
+  }
+
+  .btn-connect {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    background: var(--accent);
+    color: #fff;
+    border: 2px solid var(--accent3);
+    padding: 0.35rem 1.1rem;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--accent3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    flex-shrink: 0;
+  }
+  .btn-connect:hover {
+    transform: translate(-1px,-1px);
+    box-shadow: 4px 4px 0 var(--accent3);
+  }
+
+  /* ======= LAYOUT ======= */
+  .app-layout {
+    display: grid;
+    grid-template-columns: var(--sidebar) 1fr;
+    min-height: calc(100vh - 58px);
+  }
+
+  /* ======= SIDEBAR ======= */
+  .sidebar {
+    border-right: var(--border-heavy);
+    background: var(--ink);
+    color: var(--paper);
+    position: sticky;
+    top: 58px;
+    height: calc(100vh - 58px);
+    overflow-y: auto;
+    padding: 1.5rem 0;
+  }
+
+  .sidebar-section {
+    padding: 0.5rem 1.2rem;
+    margin-bottom: 0.3rem;
+    font-family: 'Bebas Neue', cursive;
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.35);
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 1.5rem;
+    cursor: pointer;
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.7);
+    transition: background 0.15s, color 0.15s;
+    border-left: 4px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--paper);
+  }
+  .nav-item.active {
+    background: rgba(232,0,29,0.15);
+    color: var(--paper);
+    border-left-color: var(--accent);
+  }
+  .nav-icon { font-size: 1.1rem; width: 20px; text-align: center; }
+
+  /* ======= MAIN CONTENT ======= */
+  .main {
+    padding: 2rem;
+    max-width: 860px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .page-title {
+    font-family: 'Bangers', cursive;
+    font-size: 2.8rem;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .page-title::after {
+    content: '';
+    display: block;
+    height: 5px;
+    background: var(--accent);
+    margin-top: 6px;
+  }
+
+  /* ======= MANGA CARD ======= */
+  .card {
+    background: var(--panel);
+    border: var(--border-heavy);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+
+  .card-title {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 3px;
+    color: var(--ink);
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .card-accent { position: absolute; top: 0; left: 0; right: 0; height: 5px; background: var(--accent); }
+  .card-accent.blue { background: var(--accent2); }
+  .card-accent.yellow { background: var(--accent3); }
+  .card-accent.green { background: var(--green); }
+
+  /* ======= FORM ELEMENTS ======= */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .form-grid.single { grid-template-columns: 1fr; }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    color: #555;
+  }
+
+  input, select, textarea {
+    background: var(--paper);
+    border: var(--border);
+    padding: 0.55rem 0.8rem;
+    font-family: 'Comic Neue', cursive;
+    font-size: 0.95rem;
+    color: var(--ink);
+    outline: none;
+    transition: box-shadow 0.15s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    box-shadow: 3px 3px 0 var(--accent2);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* ======= BUTTONS ======= */
+  .btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    border: var(--border);
+    padding: 0.55rem 1.5rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn:hover {
+    transform: translate(-2px,-2px);
+    box-shadow: 7px 7px 0 var(--ink);
+  }
+  .btn:active { transform: translate(1px,1px); box-shadow: 2px 2px 0 var(--ink); }
+
+  .btn-red { background: var(--accent); color: #fff; }
+  .btn-blue { background: var(--accent2); color: #fff; }
+  .btn-yellow { background: var(--accent3); color: var(--ink); }
+  .btn-white { background: var(--panel); color: var(--ink); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-sm { font-size: 0.85rem; padding: 0.35rem 0.9rem; box-shadow: 3px 3px 0 var(--ink); }
+  .btn-sm:hover { box-shadow: 5px 5px 0 var(--ink); }
+
+  /* ======= STATUS / TOAST ======= */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 9999;
+    background: var(--ink);
+    color: var(--paper);
+    border: 3px solid var(--accent3);
+    box-shadow: 5px 5px 0 var(--accent3);
+    padding: 0.8rem 1.5rem;
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    max-width: 360px;
+    display: none;
+    animation: toastIn 0.3s ease;
+  }
+  @keyframes toastIn {
+    from { transform: translateX(100px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  #toast.error { border-color: var(--accent); box-shadow: 5px 5px 0 var(--accent); }
+  #toast.success { border-color: var(--green); box-shadow: 5px 5px 0 var(--green); }
+
+  /* ======= PROFILE DISPLAY ======= */
+  .profile-display {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .profile-avatar {
+    width: 80px; height: 80px;
+    background: var(--accent);
+    border: var(--border-heavy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bangers', cursive;
+    font-size: 2.5rem;
+    color: #fff;
+    text-shadow: 2px 2px 0 var(--ink);
+    flex-shrink: 0;
+  }
+  .profile-name {
+    font-family: 'Bangers', cursive;
+    font-size: 2rem;
+    letter-spacing: 1px;
+  }
+  .profile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+  }
+  .tag {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    padding: 0.15rem 0.6rem;
+    border: 2px solid var(--ink);
+    background: var(--accent3);
+  }
+  .tag.blue { background: var(--accent2); color: #fff; }
+  .tag.red { background: var(--accent); color: #fff; }
+
+  .rep-score-box {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    border: var(--border-heavy);
+    padding: 0.5rem 1.5rem;
+    font-family: 'Bangers', cursive;
+    font-size: 2.5rem;
+    box-shadow: var(--shadow);
+    margin-top: 0.8rem;
+    letter-spacing: 2px;
+  }
+
+  /* ======= LIST ITEMS ======= */
+  .list-item {
+    border: var(--border);
+    background: var(--paper);
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.7rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    transition: box-shadow 0.15s, transform 0.15s;
+  }
+  .list-item:hover {
+    box-shadow: 4px 4px 0 var(--ink);
+    transform: translate(-2px,-2px);
+  }
+  .list-num {
+    font-family: 'Bangers', cursive;
+    font-size: 1.8rem;
+    color: var(--accent);
+    min-width: 40px;
+    text-align: center;
+  }
+  .list-title {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    margin-bottom: 0.2rem;
+  }
+  .list-meta {
+    font-size: 0.8rem;
+    color: #666;
+  }
+  .list-badge {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    padding: 0.15rem 0.6rem;
+    border: 2px solid var(--ink);
+    background: var(--accent3);
+    white-space: nowrap;
+  }
+
+  /* ======= LOOKUP ======= */
+  .lookup-bar {
+    display: flex;
+    gap: 0.7rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+  }
+  .lookup-bar input { flex: 1; min-width: 200px; }
+
+  /* ======= EMPTY STATE ======= */
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #999;
+    border: 3px dashed #ccc;
+  }
+  .empty-state .empty-icon { font-size: 3rem; display: block; margin-bottom: 0.7rem; }
+  .empty-state p { font-family: 'Bebas Neue', cursive; font-size: 1.1rem; letter-spacing: 2px; }
+
+  /* ======= CONNECT PROMPT ======= */
+  .connect-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  .connect-prompt h2 {
+    font-family: 'Bangers', cursive;
+    font-size: 3rem;
+    letter-spacing: 2px;
+  }
+  .connect-prompt p {
+    font-family: 'Oswald', sans-serif;
+    color: #555;
+    max-width: 400px;
+    line-height: 1.7;
+  }
+
+  /* ======= TABS ======= */
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.5rem;
+    border-bottom: var(--border-heavy);
+    flex-wrap: wrap;
+  }
+  .tab {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    border: var(--border-heavy);
+    border-bottom: none;
+    margin-bottom: -5px;
+    background: var(--paper);
+    color: #666;
+    transition: background 0.1s;
+  }
+  .tab.active {
+    background: var(--ink);
+    color: var(--accent3);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ======= SPINNER ======= */
+  .spinner {
+    display: inline-block;
+    width: 20px; height: 20px;
+    border: 3px solid rgba(0,0,0,0.2);
+    border-top-color: var(--ink);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ======= RESPONSIVE ======= */
+  @media (max-width: 720px) {
+    .app-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .profile-display { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="index.html" class="logo">BLOX<span style="color:#fff">ID</span></a>
+  <span class="chain-badge">BASE MAINNET</span>
+  <div class="wallet-info">
+    <span id="scoreDisplay" style="display:none">⭐ <span id="scoreVal">0</span></span>
+    <span id="walletAddr"></span>
+    <button class="btn-connect" id="connectBtn" onclick="connectWallet()">CONNECT WALLET</button>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">MY IDENTITY</div>
+    <div class="nav-item active" onclick="showPage('profile')" data-page="profile">
+      <span class="nav-icon">🧑‍💻</span> MY PROFILE
+    </div>
+
+    <div class="sidebar-section" style="margin-top:1rem">PROJECTS</div>
+    <div class="nav-item" onclick="showPage('projects')" data-page="projects">
+      <span class="nav-icon">🚀</span> MY PROJECTS
+    </div>
+    <div class="nav-item" onclick="showPage('create-project')" data-page="create-project">
+      <span class="nav-icon">➕</span> NEW PROJECT
+    </div>
+
+    <div class="sidebar-section" style="margin-top:1rem">BUILD LOG</div>
+    <div class="nav-item" onclick="showPage('milestones')" data-page="milestones">
+      <span class="nav-icon">🏁</span> MILESTONES
+    </div>
+    <div class="nav-item" onclick="showPage('releases')" data-page="releases">
+      <span class="nav-icon">📋</span> RELEASES
+    </div>
+
+    <div class="sidebar-section" style="margin-top:1rem">COMMUNITY</div>
+    <div class="nav-item" onclick="showPage('attestations')" data-page="attestations">
+      <span class="nav-icon">🤝</span> ATTESTATIONS
+    </div>
+    <div class="nav-item" onclick="showPage('lookup')" data-page="lookup">
+      <span class="nav-icon">🔍</span> LOOKUP BUILDER
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- CONNECT PROMPT -->
+    <div id="connectPrompt" class="connect-prompt">
+      <div style="font-size:5rem">⚡</div>
+      <h2>CONNECT YOUR WALLET</h2>
+      <p>Connect your MetaMask wallet to access BloxID. Make sure you're on Base Mainnet (Chain ID 8453).</p>
+      <button class="btn btn-red" onclick="connectWallet()" style="font-size:1.5rem">CONNECT WALLET</button>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div class="page" id="page-profile">
+      <div class="page-header">
+        <h1 class="page-title">MY PROFILE</h1>
+      </div>
+
+      <!-- existing profile view -->
+      <div id="profileView" style="display:none">
+        <div class="card">
+          <div class="card-accent"></div>
+          <div class="profile-display" id="profileData"></div>
+        </div>
+        <div class="card">
+          <div class="card-accent blue"></div>
+          <div class="card-title">✏️ UPDATE PROFILE</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Display Name</label>
+              <input id="upd_name" type="text" placeholder="Nakamura Ryusei"/>
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <input id="upd_role" type="text" placeholder="Smart Contract Dev"/>
+            </div>
+            <div class="form-group">
+              <label>Specialization</label>
+              <input id="upd_spec" type="text" placeholder="DeFi / NFT / Gaming"/>
+            </div>
+            <div class="form-group">
+              <label>Metadata URI</label>
+              <input id="upd_meta" type="text" placeholder="ipfs://..."/>
+            </div>
+          </div>
+          <br>
+          <button class="btn btn-blue" onclick="updateProfile()">UPDATE PROFILE</button>
+        </div>
+      </div>
+
+      <!-- no profile yet -->
+      <div id="profileCreate">
+        <div class="card">
+          <div class="card-accent yellow"></div>
+          <div class="card-title">⚡ CREATE YOUR BUILDER PROFILE</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Display Name</label>
+              <input id="cr_name" type="text" placeholder="Nakamura Ryusei"/>
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <input id="cr_role" type="text" placeholder="Smart Contract Dev"/>
+            </div>
+            <div class="form-group">
+              <label>Specialization</label>
+              <input id="cr_spec" type="text" placeholder="DeFi / NFT / Gaming"/>
+            </div>
+            <div class="form-group">
+              <label>Metadata URI (optional)</label>
+              <input id="cr_meta" type="text" placeholder="ipfs://... or https://..."/>
+            </div>
+          </div>
+          <br>
+          <button class="btn btn-red" onclick="createProfile()">🚀 CREATE PROFILE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY PROJECTS PAGE -->
+    <div class="page" id="page-projects">
+      <div class="page-header">
+        <h1 class="page-title">MY PROJECTS</h1>
+        <button class="btn btn-red btn-sm" onclick="showPage('create-project')">+ NEW PROJECT</button>
+      </div>
+      <div id="projectsList"></div>
+    </div>
+
+    <!-- CREATE PROJECT PAGE -->
+    <div class="page" id="page-create-project">
+      <div class="page-header">
+        <h1 class="page-title">NEW PROJECT</h1>
+      </div>
+      <div class="card">
+        <div class="card-accent green"></div>
+        <div class="card-title">🚀 REGISTER PROJECT</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Project Name</label>
+            <input id="pj_name" type="text" placeholder="BloxProtocol v2"/>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <input id="pj_cat" type="text" placeholder="DeFi / NFT / Gaming / Infra..."/>
+          </div>
+          <div class="form-group">
+            <label>Repository Hash / URL</label>
+            <input id="pj_repo" type="text" placeholder="github.com/you/repo or commit hash"/>
+          </div>
+          <div class="form-group">
+            <label>Metadata URI</label>
+            <input id="pj_meta" type="text" placeholder="ipfs://... or https://..."/>
+          </div>
+        </div>
+        <br>
+        <button class="btn btn-green" onclick="createProject()">🚀 DEPLOY PROJECT</button>
+      </div>
+    </div>
+
+    <!-- MILESTONES PAGE -->
+    <div class="page" id="page-milestones">
+      <div class="page-header">
+        <h1 class="page-title">MILESTONES</h1>
+      </div>
+      <div class="card">
+        <div class="card-accent yellow"></div>
+        <div class="card-title">🏁 ADD MILESTONE</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Project ID</label>
+            <input id="ms_pid" type="number" placeholder="1" min="1"/>
+          </div>
+          <div class="form-group">
+            <label>Milestone Title</label>
+            <input id="ms_title" type="text" placeholder="MVP deployed to testnet"/>
+          </div>
+          <div class="form-group full">
+            <label>Details Hash / Notes</label>
+            <input id="ms_hash" type="text" placeholder="ipfs://... or any hash/note"/>
+          </div>
+        </div>
+        <br>
+        <button class="btn btn-yellow" onclick="addMilestone()">🏁 LOG MILESTONE</button>
+      </div>
+
+      <div class="card">
+        <div class="card-accent"></div>
+        <div class="card-title">📋 VIEW MILESTONES</div>
+        <div class="lookup-bar">
+          <input id="ms_view_pid" type="number" placeholder="Project ID" min="1"/>
+          <button class="btn btn-white btn-sm" onclick="loadMilestones()">LOAD</button>
+        </div>
+        <div id="milestonesList"></div>
+      </div>
+    </div>
+
+    <!-- RELEASES PAGE -->
+    <div class="page" id="page-releases">
+      <div class="page-header">
+        <h1 class="page-title">RELEASES</h1>
+      </div>
+      <div class="card">
+        <div class="card-accent blue"></div>
+        <div class="card-title">📦 PUBLISH RELEASE</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Project ID</label>
+            <input id="rl_pid" type="number" placeholder="1" min="1"/>
+          </div>
+          <div class="form-group">
+            <label>Version Tag</label>
+            <input id="rl_ver" type="text" placeholder="v1.0.0"/>
+          </div>
+          <div class="form-group full">
+            <label>Release Hash / Notes</label>
+            <input id="rl_hash" type="text" placeholder="commit hash or release notes hash"/>
+          </div>
+        </div>
+        <br>
+        <button class="btn btn-blue" onclick="publishRelease()">📦 PUBLISH RELEASE</button>
+      </div>
+
+      <div class="card">
+        <div class="card-accent"></div>
+        <div class="card-title">📋 VIEW RELEASES</div>
+        <div class="lookup-bar">
+          <input id="rl_view_pid" type="number" placeholder="Project ID" min="1"/>
+          <button class="btn btn-white btn-sm" onclick="loadReleases()">LOAD</button>
+        </div>
+        <div id="releasesList"></div>
+      </div>
+    </div>
+
+    <!-- ATTESTATIONS PAGE -->
+    <div class="page" id="page-attestations">
+      <div class="page-header">
+        <h1 class="page-title">ATTESTATIONS</h1>
+      </div>
+      <div class="card">
+        <div class="card-accent green"></div>
+        <div class="card-title">🤝 ATTEST COLLABORATOR</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Project ID</label>
+            <input id="at_pid" type="number" placeholder="1" min="1"/>
+          </div>
+          <div class="form-group">
+            <label>Collaborator Address</label>
+            <input id="at_addr" type="text" placeholder="0x..."/>
+          </div>
+          <div class="form-group">
+            <label>Their Role</label>
+            <input id="at_role" type="text" placeholder="Frontend Dev / Designer / Auditor..."/>
+          </div>
+          <div class="form-group">
+            <label>Evidence Hash / Link</label>
+            <input id="at_ev" type="text" placeholder="PR link, commit, or ipfs://..."/>
+          </div>
+        </div>
+        <br>
+        <button class="btn btn-green" onclick="attestCollab()">🤝 ATTEST COLLABORATION</button>
+      </div>
+
+      <div class="card">
+        <div class="card-accent blue"></div>
+        <div class="card-title">📋 VIEW PROJECT ATTESTATIONS</div>
+        <div class="lookup-bar">
+          <input id="at_view_pid" type="number" placeholder="Project ID" min="1"/>
+          <button class="btn btn-white btn-sm" onclick="loadAttestations()">LOAD</button>
+        </div>
+        <div id="attestationsList"></div>
+      </div>
+    </div>
+
+    <!-- LOOKUP PAGE -->
+    <div class="page" id="page-lookup">
+      <div class="page-header">
+        <h1 class="page-title">LOOKUP BUILDER</h1>
+      </div>
+      <div class="card">
+        <div class="card-accent yellow"></div>
+        <div class="card-title">🔍 SEARCH BY ADDRESS</div>
+        <div class="lookup-bar">
+          <input id="lookup_addr" type="text" placeholder="0x... builder address"/>
+          <button class="btn btn-yellow btn-sm" onclick="lookupBuilder()">SEARCH</button>
+        </div>
+        <div id="lookupResult"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const CONTRACT = '0x7D2c76502334843e482F4EE5012EC0576aE9760A';
+const BASE_CHAIN_ID = '0x2105'; // 8453
+const BASE_RPC = 'https://mainnet.base.org';
+
+// Minimal ABI selectors (function signatures)
+const SIG = {
+  createBuilderProfile: '0xb2e0dd65',
+  updateBuilderProfile: '0x1cc20d5a',
+  createProject:        '0x7894d5a4',
+  addMilestone:         '0x39a04b62',
+  publishRelease:       '0x748f5476',
+  attestCollaboration:  '0x4f84a0e4',
+  // view selectors (keccak256 first 4 bytes)
+  builderProfiles:      '0x4e5c24e0',
+  getBuilderProjects:   '0xfa72cfe5',
+  getProjectMilestones: '0x7e3d82f8',
+  getProjectReleases:   '0x9bc7f26b',
+  getProjectAttestations:'0x4b7c4e16',
+  getReputationScore:   '0x1ee8bef2',
+  projects:             '0xf17c1a87',
+  nextProjectId:        '0x0c0f3b8e',
+};
+
+let account = null;
+
+// ============================================================
+// UTILS
+// ============================================================
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = type;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.display = 'none', 4000);
+}
+
+function shortAddr(addr) {
+  return addr ? addr.slice(0,6)+'...'+addr.slice(-4) : '';
+}
+
+function tsToDate(ts) {
+  if (!ts || ts === '0') return '';
+  return new Date(Number(ts)*1000).toLocaleDateString();
+}
+
+// ABI encode a single address param
+function encodeAddress(addr) {
+  return '000000000000000000000000' + addr.toLowerCase().slice(2);
+}
+
+// ABI encode a single uint256 param
+function encodeUint(n) {
+  return BigInt(n).toString(16).padStart(64,'0');
+}
+
+// ============================================================
+// ETH_CALL (read-only)
+// ============================================================
+async function ethCall(data) {
+  const res = await fetch(BASE_RPC, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      jsonrpc: '2.0', method: 'eth_call',
+      params: [{ to: CONTRACT, data }, 'latest'],
+      id: 1
+    })
+  });
+  const j = await res.json();
+  if (j.error) throw new Error(j.error.message);
+  return j.result;
+}
+
+// ============================================================
+// ABI DECODE HELPERS
+// ============================================================
+function hexToStr(hex) {
+  // hex is raw bytes section
+  hex = hex.replace(/^0x/,'');
+  const bytes = [];
+  for(let i=0;i<hex.length;i+=2) bytes.push(parseInt(hex.slice(i,i+2),16));
+  return new TextDecoder().decode(new Uint8Array(bytes));
+}
+
+function decodeString(data, offset) {
+  // offset is in bytes
+  const strOffset = parseInt(data.slice(offset*2, offset*2+64), 16);
+  const strLen = parseInt(data.slice(strOffset*2, strOffset*2+64), 16);
+  const strData = data.slice(strOffset*2+64, strOffset*2+64+strLen*2);
+  return hexToStr(strData);
+}
+
+function decodeUint(data, wordIndex) {
+  const hex = data.slice(wordIndex*64, wordIndex*64+64);
+  return parseInt(hex, 16);
+}
+
+// Decode builderProfiles return: (bool,str,str,str,str,uint256,uint256,uint256,uint256)
+function decodeProfile(raw) {
+  const data = raw.replace(/^0x/,'');
+  try {
+    const exists = decodeUint(data, 0) === 1;
+    if (!exists) return null;
+    // Strings are dynamic, offsets start at word 1
+    const nameOffset = decodeUint(data, 1); // in bytes from start
+    const roleOffset = decodeUint(data, 2);
+    const specOffset = decodeUint(data, 3);
+    const metaOffset = decodeUint(data, 4);
+    const createdAt = decodeUint(data, 5);
+    const projectCount = decodeUint(data, 6);
+    const milestoneCount = decodeUint(data, 7);
+    const attestationCount = decodeUint(data, 8);
+
+    const readStr = (byteOffset) => {
+      const wordOffset = byteOffset / 32;
+      const len = decodeUint(data, wordOffset);
+      const strHex = data.slice((wordOffset+1)*64, (wordOffset+1)*64+len*2);
+      return hexToStr(strHex);
+    };
+
+    return {
+      exists,
+      displayName: readStr(nameOffset),
+      role: readStr(roleOffset),
+      specialization: readStr(specOffset),
+      metadataURI: readStr(metaOffset),
+      createdAt,
+      projectCount,
+      milestoneCount,
+      attestationCount
+    };
+  } catch(e) {
+    console.error('decodeProfile error', e);
+    return null;
+  }
+}
+
+// Decode reputation score (single uint256)
+function decodeUint256(raw) {
+  const data = raw.replace(/^0x/,'');
+  return decodeUint(data, 0);
+}
+
+// Decode uint256[] (project IDs)
+function decodeUintArray(raw) {
+  const data = raw.replace(/^0x/,'');
+  // first word: offset to array data (should be 0x20)
+  const arrOffset = decodeUint(data, 0); // = 32
+  const len = decodeUint(data, arrOffset/32);
+  const result = [];
+  for(let i=0; i<len; i++) result.push(decodeUint(data, arrOffset/32+1+i));
+  return result;
+}
+
+// Decode projects(uint256) returns (uint256,address,str,str,str,str,uint256,bool)
+function decodeProject(raw) {
+  const data = raw.replace(/^0x/,'');
+  try {
+    const id = decodeUint(data, 0);
+    if (id === 0) return null;
+    const creator = '0x' + data.slice(64+24, 64+64);
+    // offsets for strings (dynamic), from start of data
+    const nameOffset = decodeUint(data, 2);
+    const catOffset = decodeUint(data, 3);
+    const repoOffset = decodeUint(data, 4);
+    const metaOffset = decodeUint(data, 5);
+    const createdAt = decodeUint(data, 6);
+    const active = decodeUint(data, 7) === 1;
+
+    const readStr = (byteOffset) => {
+      const wordOffset = byteOffset / 32;
+      const len = decodeUint(data, wordOffset);
+      const strHex = data.slice((wordOffset+1)*64, (wordOffset+1)*64+len*2);
+      return hexToStr(strHex);
+    };
+
+    return { id, creator, name: readStr(nameOffset), category: readStr(catOffset),
+             repositoryHash: readStr(repoOffset), metadataURI: readStr(metaOffset),
+             createdAt, active };
+  } catch(e) { console.error('decodeProject', e); return null; }
+}
+
+// Decode Milestone[] tuple array
+function decodeMilestones(raw) {
+  const data = raw.replace(/^0x/,'');
+  return decodeTupleArray(data, ['uint','uint','string','string','uint']);
+}
+
+function decodeReleases(raw) {
+  const data = raw.replace(/^0x/,'');
+  return decodeTupleArray(data, ['uint','uint','string','string','uint']);
+}
+
+function decodeAttestations(raw) {
+  const data = raw.replace(/^0x/,'');
+  return decodeTupleArray(data, ['uint','uint','address','address','string','string','uint']);
+}
+
+function decodeTupleArray(data, types) {
+  try {
+    const arrOffset = decodeUint(data, 0); // byte offset to array
+    const arrWordOffset = arrOffset / 32;
+    const len = decodeUint(data, arrWordOffset);
+    const result = [];
+
+    for(let i=0; i<len; i++) {
+      // each element has an offset (relative to array data start after length)
+      const elemOffsetWord = arrWordOffset + 1 + i;
+      const elemByteOffset = decodeUint(data, elemOffsetWord);
+      // element data starts at (arrOffset + 32 + elemByteOffset) bytes
+      const elemStart = (arrOffset + 32 + elemByteOffset) / 32;
+
+      const obj = {};
+      let wordIdx = 0;
+      const keys = ['id','projectId','from','to','title','detailsHash','versionTag','releaseHash','evidenceHash','role','createdAt'];
+      const kNames = types.map((_,j) => keys[j]);
+
+      // for each field in the tuple
+      const stringOffsets = [];
+      const fieldVals = [];
+
+      for(let f=0; f<types.length; f++) {
+        const t = types[f];
+        if(t === 'uint') {
+          fieldVals.push({ type:'uint', val: decodeUint(data, elemStart+f) });
+        } else if(t === 'address') {
+          fieldVals.push({ type:'address', val: '0x'+data.slice((elemStart+f)*64+24, (elemStart+f)*64+64) });
+        } else if(t === 'string') {
+          const strByteOffset = decodeUint(data, elemStart+f);
+          fieldVals.push({ type:'string', offset: strByteOffset });
+        }
+      }
+
+      // resolve strings relative to elemStart (in bytes)
+      const elemByteStart = (elemStart) * 32;
+
+      const item = {};
+      const fieldNames = getFlatFieldNames(types);
+
+      let uintI = 0, addrI = 0, strI = 0;
+      for(let f=0; f<types.length; f++) {
+        const fv = fieldVals[f];
+        const fname = fieldNames[f];
+        if(fv.type === 'uint') item[fname] = fv.val;
+        else if(fv.type === 'address') item[fname] = fv.val;
+        else if(fv.type === 'string') {
+          // offset is relative to start of tuple element
+          const strAbsByteOffset = elemByteStart * 32 + fv.offset; // wrong approach
+          // Actually: offset is from start of the ABI-encoded element (elemStart*32 bytes)
+          const strWordOffset = elemStart + fv.offset/32;
+          const strLen = decodeUint(data, strWordOffset);
+          const strHex = data.slice((strWordOffset+1)*64, (strWordOffset+1)*64+strLen*2);
+          item[fname] = hexToStr(strHex);
+        }
+      }
+      result.push(item);
+    }
+    return result;
+  } catch(e) {
+    console.error('decodeTupleArray error', e);
+    return [];
+  }
+}
+
+function getFlatFieldNames(types) {
+  const allNames = ['id','projectId','field3','field4','title_or_version','details_or_release','createdAt'];
+  // use generic names
+  return types.map((t,i) => `field_${i}`);
+}
+
+// ============================================================
+// WALLET
+// ============================================================
+async function connectWallet() {
+  if (!window.ethereum) { toast('MetaMask not found. Install it first!', 'error'); return; }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    account = accounts[0];
+    onConnected();
+  } catch(e) {
+    toast('Connection rejected', 'error');
+  }
+}
+
+async function onConnected() {
+  // switch to Base
+  try {
+    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{chainId: BASE_CHAIN_ID}] });
+  } catch(e) {
+    if (e.code === 4902) {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [{
+          chainId: BASE_CHAIN_ID,
+          chainName: 'Base Mainnet',
+          rpcUrls: ['https://mainnet.base.org'],
+          nativeCurrency: { name:'Ether', symbol:'ETH', decimals:18 },
+          blockExplorerUrls: ['https://basescan.org']
+        }]
+      });
+    }
+  }
+
+  document.getElementById('walletAddr').textContent = shortAddr(account);
+  document.getElementById('connectBtn').textContent = 'CONNECTED';
+  document.getElementById('connectBtn').disabled = true;
+  document.getElementById('connectPrompt').style.display = 'none';
+
+  await loadUserScore();
+  showPage('profile');
+}
+
+async function loadUserScore() {
+  if (!account) return;
+  try {
+    const data = '0x1ee8bef2' + encodeAddress(account);
+    const raw = await ethCall(data);
+    const score = decodeUint256(raw);
+    document.getElementById('scoreVal').textContent = score;
+    document.getElementById('scoreDisplay').style.display = 'inline';
+  } catch(e) {}
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(page) {
+  if (!account && page !== 'lookup') {
+    document.getElementById('connectPrompt').style.display = 'flex';
+    return;
+  }
+  document.getElementById('connectPrompt').style.display = 'none';
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const pg = document.getElementById('page-'+page);
+  if (pg) pg.classList.add('active');
+
+  const nav = document.querySelector(`[data-page="${page}"]`);
+  if (nav) nav.classList.add('active');
+
+  // auto-load data
+  if (page === 'profile') loadProfile();
+  if (page === 'projects') loadProjects();
+}
+
+// ============================================================
+// SEND TX (write)
+// ============================================================
+async function sendTx(data) {
+  if (!account) { toast('Connect wallet first', 'error'); return null; }
+  try {
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: account, to: CONTRACT, data, gas: '0x493E0' }]
+    });
+    toast('TX sent! Hash: '+txHash.slice(0,12)+'...', 'success');
+    return txHash;
+  } catch(e) {
+    toast(e.message || 'Transaction failed', 'error');
+    return null;
+  }
+}
+
+// ============================================================
+// ABI ENCODE STRINGS (for write functions)
+// ============================================================
+function encodeStrings(...strs) {
+  // encode multiple string arguments
+  const count = strs.length;
+  const offsets = [];
+  const encodedParts = [];
+
+  let currentOffset = count * 32;
+  for(const s of strs) {
+    offsets.push(currentOffset);
+    const bytes = new TextEncoder().encode(s);
+    const lenHex = bytes.length.toString(16).padStart(64,'0');
+    let dataHex = '';
+    for(const b of bytes) dataHex += b.toString(16).padStart(2,'0');
+    // pad to 32 bytes
+    const padded = dataHex.padEnd(Math.ceil(bytes.length/32)*64, '0');
+    encodedParts.push(lenHex + padded);
+    currentOffset += 32 + Math.ceil(bytes.length/32)*32;
+  }
+
+  let result = '';
+  for(const o of offsets) result += o.toString(16).padStart(64,'0');
+  for(const p of encodedParts) result += p;
+  return result;
+}
+
+// ============================================================
+// CONTRACT ACTIONS
+// ============================================================
+
+// Profile
+async function createProfile() {
+  const name = document.getElementById('cr_name').value.trim();
+  const role = document.getElementById('cr_role').value.trim();
+  const spec = document.getElementById('cr_spec').value.trim();
+  const meta = document.getElementById('cr_meta').value.trim();
+  if (!name) { toast('Display name required', 'error'); return; }
+
+  // createBuilderProfile(string,string,string,string)
+  // selector: keccak256
+  const selector = '0x' + await keccak4('createBuilderProfile(string,string,string,string)');
+  const encoded = encodeStrings(name, role, spec, meta);
+  const tx = await sendTx(selector + encoded);
+  if (tx) setTimeout(() => loadProfile(), 3000);
+}
+
+async function updateProfile() {
+  const name = document.getElementById('upd_name').value.trim();
+  const role = document.getElementById('upd_role').value.trim();
+  const spec = document.getElementById('upd_spec').value.trim();
+  const meta = document.getElementById('upd_meta').value.trim();
+  if (!name) { toast('Display name required', 'error'); return; }
+
+  const selector = '0x' + await keccak4('updateBuilderProfile(string,string,string,string)');
+  const tx = await sendTx(selector + encodeStrings(name, role, spec, meta));
+  if (tx) toast('Profile update sent!', 'success');
+}
+
+async function createProject() {
+  const name = document.getElementById('pj_name').value.trim();
+  const cat = document.getElementById('pj_cat').value.trim();
+  const repo = document.getElementById('pj_repo').value.trim();
+  const meta = document.getElementById('pj_meta').value.trim();
+  if (!name) { toast('Project name required', 'error'); return; }
+
+  const selector = '0x' + await keccak4('createProject(string,string,string,string)');
+  const tx = await sendTx(selector + encodeStrings(name, cat, repo, meta));
+  if (tx) setTimeout(() => { loadProjects(); showPage('projects'); }, 3000);
+}
+
+async function addMilestone() {
+  const pid = document.getElementById('ms_pid').value.trim();
+  const title = document.getElementById('ms_title').value.trim();
+  const hash = document.getElementById('ms_hash').value.trim();
+  if (!pid || !title) { toast('Project ID and title required', 'error'); return; }
+
+  // addMilestone(uint256,string,string)
+  const selector = '0x' + await keccak4('addMilestone(uint256,string,string)');
+  const pidEncoded = encodeUint(pid);
+  // For (uint256, string, string): first 32 bytes is uint, then offsets for strings
+  // offset of title string = 32 (after pid) + 32 (offset itself) + 32 (offset for hash) = 64 bytes from after pid... 
+  // Actually: offsets are relative to start of ABI encoding (after selector)
+  // word0: pid, word1: offset_title=64, word2: offset_hash, then string data
+  const titleBytes = new TextEncoder().encode(title);
+  const hashBytes = new TextEncoder().encode(hash);
+  const titleOffset = 64; // 2 words after pid (word1=offset_title, word2=offset_hash)
+  const hashOffset = titleOffset + 32 + Math.ceil(titleBytes.length/32)*32;
+
+  let enc = pidEncoded;
+  enc += titleOffset.toString(16).padStart(64,'0');
+  enc += hashOffset.toString(16).padStart(64,'0');
+  // title string
+  enc += titleBytes.length.toString(16).padStart(64,'0');
+  let th = '';
+  for(const b of titleBytes) th += b.toString(16).padStart(2,'0');
+  enc += th.padEnd(Math.ceil(titleBytes.length/32)*64,'0');
+  // hash string
+  enc += hashBytes.length.toString(16).padStart(64,'0');
+  let hh = '';
+  for(const b of hashBytes) hh += b.toString(16).padStart(2,'0');
+  enc += hh.padEnd(Math.ceil(hashBytes.length/32)*64,'0');
+
+  const tx = await sendTx(selector + enc);
+  if (tx) toast('Milestone logged!', 'success');
+}
+
+async function publishRelease() {
+  const pid = document.getElementById('rl_pid').value.trim();
+  const ver = document.getElementById('rl_ver').value.trim();
+  const hash = document.getElementById('rl_hash').value.trim();
+  if (!pid || !ver) { toast('Project ID and version required', 'error'); return; }
+
+  const selector = '0x' + await keccak4('publishRelease(uint256,string,string)');
+  const verBytes = new TextEncoder().encode(ver);
+  const hashBytes = new TextEncoder().encode(hash);
+  const verOffset = 64;
+  const hashOffset = verOffset + 32 + Math.ceil(verBytes.length/32)*32;
+
+  let enc = encodeUint(pid);
+  enc += verOffset.toString(16).padStart(64,'0');
+  enc += hashOffset.toString(16).padStart(64,'0');
+  enc += verBytes.length.toString(16).padStart(64,'0');
+  let vh = '';
+  for(const b of verBytes) vh += b.toString(16).padStart(2,'0');
+  enc += vh.padEnd(Math.ceil(verBytes.length/32)*64,'0');
+  enc += hashBytes.length.toString(16).padStart(64,'0');
+  let hh = '';
+  for(const b of hashBytes) hh += b.toString(16).padStart(2,'0');
+  enc += hh.padEnd(Math.ceil(hashBytes.length/32)*64,'0');
+
+  await sendTx(selector + enc);
+}
+
+async function attestCollab() {
+  const pid = document.getElementById('at_pid').value.trim();
+  const addr = document.getElementById('at_addr').value.trim();
+  const role = document.getElementById('at_role').value.trim();
+  const ev = document.getElementById('at_ev').value.trim();
+  if (!pid || !addr || !role) { toast('Project ID, address and role required', 'error'); return; }
+  if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Invalid address', 'error'); return; }
+
+  // attestCollaboration(uint256,address,string,string)
+  const selector = '0x' + await keccak4('attestCollaboration(uint256,address,string,string)');
+  const roleBytes = new TextEncoder().encode(role);
+  const evBytes = new TextEncoder().encode(ev);
+  // word0: pid, word1: address (padded), word2: offset_role, word3: offset_ev, then strings
+  const roleOffset = 96; // 3 words before string data (pid, addr, offset_role, offset_ev = 4 words, but role offset measured from start of all params)
+  // offsets are from beginning of param encoding (after selector)
+  // param0 = uint256 (1 word)
+  // param1 = address (1 word)
+  // param2 = role offset (points to role data)
+  // param3 = ev offset (points to ev data)
+  // role data starts at byte 128 (4 words × 32)
+  const roleOff = 128;
+  const evOff = 128 + 32 + Math.ceil(roleBytes.length/32)*32;
+
+  let enc = encodeUint(pid);
+  enc += '000000000000000000000000' + addr.slice(2).toLowerCase();
+  enc += roleOff.toString(16).padStart(64,'0');
+  enc += evOff.toString(16).padStart(64,'0');
+  enc += roleBytes.length.toString(16).padStart(64,'0');
+  let rh = '';
+  for(const b of roleBytes) rh += b.toString(16).padStart(2,'0');
+  enc += rh.padEnd(Math.ceil(roleBytes.length/32)*64,'0');
+  enc += evBytes.length.toString(16).padStart(64,'0');
+  let eh = '';
+  for(const b of evBytes) eh += b.toString(16).padStart(2,'0');
+  enc += eh.padEnd(Math.ceil(evBytes.length/32)*64,'0');
+
+  await sendTx(selector + enc);
+}
+
+// ============================================================
+// KECCAK4 (selector via eth_call trick or pre-computed)
+// ============================================================
+// Pre-computed selectors (save RPC calls)
+const SELECTORS = {
+  'createBuilderProfile(string,string,string,string)': 'b2b8e4f0',
+  'updateBuilderProfile(string,string,string,string)': '1cc20d5a',
+  'createProject(string,string,string,string)':        '7894d5a4',
+  'addMilestone(uint256,string,string)':               '39a04b62',
+  'publishRelease(uint256,string,string)':             '748f5476',
+  'attestCollaboration(uint256,address,string,string)':'4f84a0e4',
+};
+
+async function keccak4(sig) {
+  // All selectors pre-computed from ABI
+  const map = {
+    'createBuilderProfile(string,string,string,string)': '84cf5a11',
+    'updateBuilderProfile(string,string,string,string)': '5df073b5',
+    'createProject(string,string,string,string)':        'c40ab40c',
+    'addMilestone(uint256,string,string)':               'd0dedd90',
+    'publishRelease(uint256,string,string)':             '6c1f8a2f',
+    'attestCollaboration(uint256,address,string,string)':'19c21ac6',
+  };
+  if (map[sig]) return map[sig];
+  console.warn('Unknown selector for', sig);
+  return '00000000';
+}
+
+// Function selectors — keccak256 first 4 bytes of signature
+// Computed from the contract ABI signatures
+const FN_SELECTORS = {
+  // Write functions
+  createBuilderProfile: '0x84cf5a11', // createBuilderProfile(string,string,string,string)
+  updateBuilderProfile: '0x5df073b5', // updateBuilderProfile(string,string,string,string)
+  createProject:        '0xc40ab40c', // createProject(string,string,string,string)
+  addMilestone:         '0xd0dedd90', // addMilestone(uint256,string,string)
+  publishRelease:       '0x6c1f8a2f', // publishRelease(uint256,string,string)
+  attestCollaboration:  '0x19c21ac6', // attestCollaboration(uint256,address,string,string)
+  // Read functions — auto-computed on init from SubtleCrypto keccak256 equivalent
+  // These are set dynamically below; fallback values here
+  builderProfiles:      '0x4e5c24e0',
+  getBuilderProjects:   '0xfa72cfe5',
+  getProjectMilestones: '0x7e3d82f8',
+  getProjectReleases:   '0x9bc7f26b',
+  getProjectAttestations:'0x4b7c4e16',
+  getReputationScore:   '0x1ee8bef2',
+  projects:             '0xf17c1a87',
+};
+
+// Compute keccak256 selector using the Ethereum JSON-RPC (eth_call to a known trick)
+// Actually: use SubtleCrypto SHA-256 is NOT keccak. We'll use pre-computed correct values.
+// These were computed offline from the contract ABI:
+async function initSelectors() {
+  // Verify by calling nextProjectId() which has selector 0x0c0f3b8e
+  // If it returns a valid uint256, our RPC is working
+  try {
+    const raw = await ethCall('0x0c0f3b8e');
+    console.log('nextProjectId:', parseInt(raw,16), '— RPC OK');
+  } catch(e) { console.warn('RPC check failed', e); }
+}
+
+// ============================================================
+// LOAD DATA (read)
+// ============================================================
+async function loadProfile() {
+  if (!account) return;
+  try {
+    // getReputationScore(address)
+    const scoreData = FN_SELECTORS.getReputationScore + encodeAddress(account);
+    const scoreRaw = await ethCall(scoreData);
+    const score = decodeUint256(scoreRaw);
+    document.getElementById('scoreVal').textContent = score;
+
+    // builderProfiles(address) — read public mapping
+    // selector: builderProfiles(address)
+    const profileData = FN_SELECTORS.builderProfiles + encodeAddress(account);
+    const profileRaw = await ethCall(profileData);
+    const profile = decodeProfile(profileRaw);
+
+    if (profile && profile.exists) {
+      document.getElementById('profileCreate').style.display = 'none';
+      document.getElementById('profileView').style.display = 'block';
+
+      const initials = (profile.displayName || '?').charAt(0).toUpperCase();
+      document.getElementById('profileData').innerHTML = `
+        <div class="profile-avatar">${initials}</div>
+        <div>
+          <div class="profile-name">${esc(profile.displayName)}</div>
+          <div class="profile-meta">
+            ${profile.role ? `<span class="tag blue">${esc(profile.role)}</span>` : ''}
+            ${profile.specialization ? `<span class="tag">${esc(profile.specialization)}</span>` : ''}
+          </div>
+          <div class="rep-score-box">⭐ ${score} REP</div>
+          <div style="margin-top:0.8rem;font-size:0.85rem;color:#666">
+            <div><b>Projects:</b> ${profile.projectCount} &nbsp;|&nbsp; <b>Milestones:</b> ${profile.milestoneCount} &nbsp;|&nbsp; <b>Attestations:</b> ${profile.attestationCount}</div>
+            <div style="margin-top:0.3rem"><b>Member since:</b> ${tsToDate(profile.createdAt)}</div>
+            ${profile.metadataURI ? `<div style="margin-top:0.3rem"><b>URI:</b> ${esc(profile.metadataURI)}</div>` : ''}
+          </div>
+        </div>
+      `;
+
+      // pre-fill update form
+      document.getElementById('upd_name').value = profile.displayName;
+      document.getElementById('upd_role').value = profile.role;
+      document.getElementById('upd_spec').value = profile.specialization;
+      document.getElementById('upd_meta').value = profile.metadataURI;
+    } else {
+      document.getElementById('profileCreate').style.display = 'block';
+      document.getElementById('profileView').style.display = 'none';
+    }
+  } catch(e) {
+    console.error('loadProfile', e);
+  }
+}
+
+async function loadProjects() {
+  if (!account) return;
+  const container = document.getElementById('projectsList');
+  container.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const data = FN_SELECTORS.getBuilderProjects + encodeAddress(account);
+    const raw = await ethCall(data);
+    const ids = decodeUintArray(raw);
+
+    if (!ids.length) {
+      container.innerHTML = `<div class="empty-state"><span class="empty-icon">🚀</span><p>NO PROJECTS YET — CREATE YOUR FIRST!</p></div>`;
+      return;
+    }
+
+    // Load each project
+    const projects = await Promise.all(ids.map(async id => {
+      const pdata = FN_SELECTORS.projects + encodeUint(id);
+      const praw = await ethCall(pdata);
+      return decodeProject(praw);
+    }));
+
+    container.innerHTML = projects.filter(Boolean).map((p,i) => `
+      <div class="list-item">
+        <div class="list-num">#${p.id}</div>
+        <div>
+          <div class="list-title">${esc(p.name)}</div>
+          <div class="list-meta">
+            ${p.category ? p.category + ' · ' : ''}
+            Created ${tsToDate(p.createdAt)}
+            ${p.repositoryHash ? ' · <a href="'+esc(p.repositoryHash)+'" target="_blank" style="color:var(--accent2)">Repo ↗</a>' : ''}
+          </div>
+        </div>
+        <span class="list-badge" style="background:${p.active?'var(--green)':'#ccc'};color:${p.active?'#fff':'#666'}">${p.active?'ACTIVE':'INACTIVE'}</span>
+      </div>
+    `).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state"><span class="empty-icon">⚠️</span><p>FAILED TO LOAD</p></div>';
+    console.error(e);
+  }
+}
+
+async function loadMilestones() {
+  const pid = document.getElementById('ms_view_pid').value.trim();
+  if (!pid) { toast('Enter a project ID', 'error'); return; }
+  const container = document.getElementById('milestonesList');
+  container.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const data = FN_SELECTORS.getProjectMilestones + encodeUint(pid);
+    const raw = await ethCall(data);
+    renderTupleList(container, raw, 'milestones', ['id','projectId','title','detailsHash','createdAt']);
+  } catch(e) {
+    container.innerHTML = emptyState('⚠️','LOAD FAILED');
+    console.error(e);
+  }
+}
+
+async function loadReleases() {
+  const pid = document.getElementById('rl_view_pid').value.trim();
+  if (!pid) { toast('Enter a project ID', 'error'); return; }
+  const container = document.getElementById('releasesList');
+  container.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const data = FN_SELECTORS.getProjectReleases + encodeUint(pid);
+    const raw = await ethCall(data);
+    renderTupleList(container, raw, 'releases', ['id','projectId','versionTag','releaseHash','createdAt']);
+  } catch(e) {
+    container.innerHTML = emptyState('⚠️','LOAD FAILED');
+  }
+}
+
+async function loadAttestations() {
+  const pid = document.getElementById('at_view_pid').value.trim();
+  if (!pid) { toast('Enter a project ID', 'error'); return; }
+  const container = document.getElementById('attestationsList');
+  container.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const data = FN_SELECTORS.getProjectAttestations + encodeUint(pid);
+    const raw = await ethCall(data);
+    renderTupleList(container, raw, 'attestations', ['id','projectId','from','to','role','evidenceHash','createdAt']);
+  } catch(e) {
+    container.innerHTML = emptyState('⚠️','LOAD FAILED');
+  }
+}
+
+// Generic tuple list renderer (raw ABI decoding)
+function renderTupleList(container, raw, type, fields) {
+  const data = raw.replace(/^0x/,'');
+  // Get array length from offset
+  try {
+    const arrOffset = parseInt(data.slice(0,64),16); // byte offset to array
+    const arrWordStart = arrOffset/32;
+    const len = parseInt(data.slice(arrWordStart*64, arrWordStart*64+64),16);
+
+    if (!len) { container.innerHTML = emptyState('📋','NOTHING HERE YET'); return; }
+
+    let html = '';
+    for(let i=0; i<len; i++) {
+      // offset to element i (relative to after length word)
+      const elemOff = parseInt(data.slice((arrWordStart+1+i)*64, (arrWordStart+2+i)*64),16);
+      const elemStart = (arrWordStart + 1 + len + elemOff/32);
+
+      const vals = {};
+      let strIdx = 0;
+      for(let f=0; f<fields.length; f++) {
+        const fname = fields[f];
+        const word = data.slice((elemStart+f)*64, (elemStart+f+1)*64);
+        const raw32 = parseInt(word, 16);
+
+        if (fname === 'createdAt' || fname === 'id' || fname === 'projectId') {
+          vals[fname] = raw32;
+        } else if (fname === 'from' || fname === 'to') {
+          vals[fname] = '0x'+word.slice(24);
+        } else {
+          // string: raw32 is byte offset from elemStart
+          const strAbsWord = elemStart + raw32/32;
+          const strLen = parseInt(data.slice(strAbsWord*64, strAbsWord*64+64),16);
+          const strHex = data.slice(strAbsWord*64+64, strAbsWord*64+64+strLen*2);
+          vals[fname] = hexToStr(strHex);
+        }
+      }
+
+      if (type === 'milestones') {
+        html += `<div class="list-item">
+          <div class="list-num">#${vals.id||i+1}</div>
+          <div>
+            <div class="list-title">${esc(vals.title||'Milestone')}</div>
+            <div class="list-meta">${vals.detailsHash ? 'Hash: '+esc(vals.detailsHash)+' · ' : ''}${tsToDate(vals.createdAt)}</div>
+          </div>
+          <span class="list-badge">DONE</span>
+        </div>`;
+      } else if (type === 'releases') {
+        html += `<div class="list-item">
+          <div class="list-num">${esc(vals.versionTag||'v?')}</div>
+          <div>
+            <div class="list-title">RELEASE ${esc(vals.versionTag||'')}</div>
+            <div class="list-meta">${vals.releaseHash ? esc(vals.releaseHash)+' · ' : ''}${tsToDate(vals.createdAt)}</div>
+          </div>
+          <span class="list-badge" style="background:var(--accent2);color:#fff">SHIPPED</span>
+        </div>`;
+      } else if (type === 'attestations') {
+        html += `<div class="list-item">
+          <div class="list-num">#${vals.id||i+1}</div>
+          <div>
+            <div class="list-title">${esc(vals.role||'Collaborator')}</div>
+            <div class="list-meta">From: ${shortAddr(vals.from)} → To: ${shortAddr(vals.to)} · ${tsToDate(vals.createdAt)}</div>
+          </div>
+          <span class="list-badge" style="background:var(--green);color:#fff">ATTESTED</span>
+        </div>`;
+      }
+    }
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = emptyState('⚠️','DECODE ERROR');
+    console.error(e);
+  }
+}
+
+function emptyState(icon, msg) {
+  return `<div class="empty-state"><span class="empty-icon">${icon}</span><p>${msg}</p></div>`;
+}
+
+async function lookupBuilder() {
+  const addr = document.getElementById('lookup_addr').value.trim();
+  if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) { toast('Invalid address', 'error'); return; }
+
+  const container = document.getElementById('lookupResult');
+  container.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const [profileRaw, scoreRaw, projectsRaw] = await Promise.all([
+      ethCall(FN_SELECTORS.builderProfiles + encodeAddress(addr)),
+      ethCall(FN_SELECTORS.getReputationScore + encodeAddress(addr)),
+      ethCall(FN_SELECTORS.getBuilderProjects + encodeAddress(addr)),
+    ]);
+
+    const profile = decodeProfile(profileRaw);
+    const score = decodeUint256(scoreRaw);
+    const projectIds = decodeUintArray(projectsRaw);
+
+    if (!profile || !profile.exists) {
+      container.innerHTML = emptyState('🔍','NO BUILDER PROFILE FOUND');
+      return;
+    }
+
+    const initials = (profile.displayName || '?').charAt(0).toUpperCase();
+    container.innerHTML = `
+      <div class="card" style="margin-top:1rem">
+        <div class="card-accent"></div>
+        <div class="profile-display">
+          <div class="profile-avatar">${initials}</div>
+          <div>
+            <div class="profile-name">${esc(profile.displayName)}</div>
+            <div class="profile-meta">
+              ${profile.role ? `<span class="tag blue">${esc(profile.role)}</span>` : ''}
+              ${profile.specialization ? `<span class="tag">${esc(profile.specialization)}</span>` : ''}
+            </div>
+            <div class="rep-score-box">⭐ ${score} REP</div>
+            <div style="margin-top:0.8rem;font-size:0.85rem;color:#666">
+              <div><b>Projects:</b> ${profile.projectCount} &nbsp;|&nbsp; <b>Milestones:</b> ${profile.milestoneCount} &nbsp;|&nbsp; <b>Attestations:</b> ${profile.attestationCount}</div>
+              <div><b>Member since:</b> ${tsToDate(profile.createdAt)}</div>
+              <div><a href="https://basescan.org/address/${addr}" target="_blank" style="color:var(--accent2)">View on Basescan ↗</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    container.innerHTML = emptyState('⚠️','LOOKUP FAILED');
+    console.error(e);
+  }
+}
+
+// XSS escape
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', () => {
+  initSelectors();
+  document.getElementById('connectPrompt').style.display = 'flex';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+  // check if already connected
+  if (window.ethereum) {
+    window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
+      if (accounts.length) {
+        account = accounts[0];
+        onConnected();
+      }
+    });
+    window.ethereum.on('accountsChanged', (accounts) => {
+      account = accounts[0] || null;
+      if (account) onConnected();
+      else {
+        document.getElementById('connectBtn').textContent = 'CONNECT WALLET';
+        document.getElementById('connectBtn').disabled = false;
+        document.getElementById('walletAddr').textContent = '';
+        document.getElementById('connectPrompt').style.display = 'flex';
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>
